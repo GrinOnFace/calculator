@@ -2,13 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-
-enum Operation {
-    PLUS = 1,
-    MINUS,
-    MULTIPLY,
-    DIVIDE
-};
+#include "bussinessLogic.h"
 
 #define PRECISION 15
 
@@ -37,14 +31,14 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-    double calc_memory = 0;
-    int last_action = 0;
+    double calc_memory = NOTHING;
+    int last_action = NOTHING;
 
-    QString validation_label (QString lable);
     QString get_res_label();
     void set_res_label(QString new_label);
-    void error_check (QString str);
-    void set_css_btn_dot_enabled (bool status);
-    double action_in_calc_memory (double number);
+
+    void error_check (QString new_label);
+    void validation_calc(action_obj temp);
+    QString validation_label (QString new_label);
 };
 #endif // MAINWINDOW_H

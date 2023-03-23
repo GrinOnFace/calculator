@@ -1,7 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "bussinessLogic.h"
+#include "stylesCss.h"
 #include <QMessageBox>
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -45,25 +46,33 @@ void MainWindow::set_res_label (QString new_label) {
     ui->result_label->setText(new_label);
 }
 
-void MainWindow::error_check (QString str) {
-    if (str.contains('e')) {
+void MainWindow::error_check (QString new_label) {
+    if (new_label.contains('e')) {
         QMessageBox::critical(this, "Error", "e in label. Push AC or use sign buttons");
-    } else if (str.length() == PRECISION){
+    } else if (new_label.length() == PRECISION){
         QMessageBox::critical(this, "Error", "Limit quantity of numbers");
     }
 }
 
-void MainWindow::set_css_btn_dot_enabled (bool status) {
-    ui->btn_dot->setEnabled(status);
-    if (status) {
-        ui->btn_dot->setStyleSheet("QPushButton{border:none;color:white;}");
+QString MainWindow::validation_label (QString new_label) {
+    if (new_label == "nan" || new_label == "inf" || new_label == "-inf" || new_label == "-nan") {
+        new_label = "0";
+    }
+    return new_label;
+}
+
+void MainWindow::validation_calc(action_obj temp) {
+    double tempMemory = action_in_calc_memory (temp);
+    if(tempMemory != ERROR) {
+        MainWindow::calc_memory = tempMemory;
     } else {
-        ui->btn_dot->setStyleSheet("QPushButton{border:none;color:black;}");
+        QMessageBox::critical(this, "Error", "Dont divide to zero");
     }
 }
 
 void MainWindow::on_btn_numbers_clicked (QString number) {
     QString label = get_res_label();
+
     if (!label.contains("e")) {
         if(label == "0") {
             set_res_label(number);
@@ -83,9 +92,9 @@ void MainWindow::on_btn_numbers_clicked (QString number) {
 void MainWindow::on_btn_clearAll_clicked()
 {
     set_res_label("0");
-    last_action = 0;
-    calc_memory = 0;
-    set_css_btn_dot_enabled(1);
+    last_action = NOTHING;
+    calc_memory = NOTHING;
+    set_css_btn_dot_enabled(1, ui->btn_dot);
 }
 
 void MainWindow::on_btn_clearOne_clicked()
@@ -98,7 +107,7 @@ void MainWindow::on_btn_clearOne_clicked()
     if(!new_label.contains("e")){
         new_label.remove(-1, 1);
         if( !new_label.contains(".")) {
-            set_css_btn_dot_enabled(1);
+            set_css_btn_dot_enabled(1, ui->btn_dot);
         }
     } else {
         error_check(new_label);
@@ -128,11 +137,11 @@ void MainWindow::on_btn_dot_clicked()
 
     if (new_label.length() == 0) {
         set_res_label("0.");
-        set_css_btn_dot_enabled(0);
+        set_css_btn_dot_enabled(0, ui->btn_dot);
     } else if (new_label.length() < PRECISION - 1 && !new_label.contains("e")) {
         new_label = new_label + ".";
         set_res_label(new_label);
-        set_css_btn_dot_enabled(0);
+        set_css_btn_dot_enabled(0, ui->btn_dot);
     } else {
         error_check(new_label);
     }
@@ -142,54 +151,42 @@ void MainWindow::on_btn_sign_clicked (int sign) {
     QString label = get_res_label();
     double number = label.toDouble();
     set_res_label("");
-    if (last_action == 0){
+
+    action_obj temp;
+    temp.memory = MainWindow::calc_memory;
+    temp.sign = MainWindow::last_action;
+    temp.number = number;
+
+    if (last_action == NOTHING){
         last_action = sign;
         calc_memory = number;
     }
     else{
-        action_in_calc_memory(number);
+        validation_calc(temp);
     }
     last_action = sign;
-    set_css_btn_dot_enabled(1);
+    set_css_btn_dot_enabled(1, ui->btn_dot);
 }
 
 void MainWindow::on_btn_equls_clicked () {
     QString label = get_res_label();
     double number = label.toDouble();
 
-    action_in_calc_memory(number);
+    action_obj temp;
+    temp.memory = MainWindow::calc_memory;
+    temp.sign = MainWindow::last_action;
+    temp.number = number;
+
+    validation_calc(temp);
     QString new_label = QString().setNum(calc_memory, 'g', PRECISION);
+    new_label = validation_label(new_label);
 
     set_res_label(new_label);
 
     if (get_res_label().contains(".")) {
-        set_css_btn_dot_enabled(0);
+        set_css_btn_dot_enabled(0, ui->btn_dot);
     } else {
-        set_css_btn_dot_enabled(1);
+        set_css_btn_dot_enabled(1, ui->btn_dot);
     }
-    last_action = 0;
-
-}
-
-double MainWindow::action_in_calc_memory (double number) {
-    switch (last_action) {
-        case PLUS:
-            calc_memory += number;
-            break;
-        case MINUS:
-            calc_memory -= number;
-            break;
-        case MULTIPLY:
-            calc_memory *= number;
-            break;
-        case DIVIDE:
-            if(number != 0) {
-                calc_memory = calc_memory / number;
-            } else {
-                QMessageBox::critical(this, "Error", "Don't divide to zero");
-            }
-            break;
-        default:
-            break;
-    }
+    last_action = NOTHING;
 }
