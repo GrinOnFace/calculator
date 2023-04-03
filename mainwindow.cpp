@@ -73,7 +73,7 @@ void MainWindow::validation_calc(action_obj temp) {
 void MainWindow::on_btn_numbers_clicked (QString number) {
     QString label = get_res_label();
 
-    if (!label.contains("e")) {
+    if (!label.contains('e')) {
         if(label == "0") {
             set_res_label(number);
         } else if (label == "-0") {
@@ -106,11 +106,11 @@ void MainWindow::on_btn_clearOne_clicked()
     }
     if(!new_label.contains("e")){
         new_label.remove(-1, 1);
-        if( !new_label.contains(".")) {
-            set_css_btn_dot_enabled(1, ui->btn_dot);
-        }
     } else {
         error_check(new_label);
+    }
+    if( !new_label.contains(".")) {
+        set_css_btn_dot_enabled(1, ui->btn_dot);
     }
     set_res_label(new_label);
 }
@@ -120,7 +120,7 @@ void MainWindow::on_btn_change_sign_clicked()
     QString label = get_res_label();
     QString new_label;
 
-    if(label.contains("-")) {
+    if(label.startsWith("-")) {
         new_label = label.remove(0, 1);
     } else if (label != "0" && !label.contains("-")){
         new_label = "-" + label;
@@ -148,18 +148,12 @@ void MainWindow::on_btn_dot_clicked()
 }
 
 void MainWindow::on_btn_sign_clicked (int sign) {
-    QString label = get_res_label();
-    double number = label.toDouble();
+    action_obj temp = structPrepare();
     set_res_label("");
-
-    action_obj temp;
-    temp.memory = MainWindow::calc_memory;
-    temp.sign = MainWindow::last_action;
-    temp.number = number;
 
     if (last_action == NOTHING){
         last_action = sign;
-        calc_memory = number;
+        calc_memory = temp.number;
     }
     else{
         validation_calc(temp);
@@ -169,14 +163,7 @@ void MainWindow::on_btn_sign_clicked (int sign) {
 }
 
 void MainWindow::on_btn_equls_clicked () {
-    QString label = get_res_label();
-    double number = label.toDouble();
-
-    action_obj temp;
-    temp.memory = MainWindow::calc_memory;
-    temp.sign = MainWindow::last_action;
-    temp.number = number;
-
+    action_obj temp = structPrepare();
     validation_calc(temp);
     QString new_label = QString().setNum(calc_memory, 'g', PRECISION);
     new_label = validation_label(new_label);
@@ -189,4 +176,14 @@ void MainWindow::on_btn_equls_clicked () {
         set_css_btn_dot_enabled(1, ui->btn_dot);
     }
     last_action = NOTHING;
+}
+
+action_obj MainWindow::structPrepare(){
+    QString label = get_res_label();
+    double number = label.toDouble();
+    action_obj temp;
+    temp.memory = MainWindow::calc_memory;
+    temp.sign = MainWindow::last_action;
+    temp.number = number;
+    return temp;
 }

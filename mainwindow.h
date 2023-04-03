@@ -40,5 +40,6 @@ private:
     void error_check (QString new_label);
     void validation_calc(action_obj temp);
     QString validation_label (QString new_label);
+    action_obj structPrepare()
 };
 #endif // MAINWINDOW_H
